@@ -1,31 +1,69 @@
 # ts-val: библиотека валидации HTML-форм на TypeScript
 
-## TS: Задачи
-Реализована библиотека валидации формы с требованиями из ведомости:
+## TS: Задачи (чеклист требований)
 
-- Точка входа `form(formElement: HTMLFormElement)`.
-- API `validator.field(name)` для настройки правил по полям.
-- Цепочки `string() / number() / array()` и ограничения.
-- Поддержка Constraint Validation API:
-  `required`, `minlength`, `maxlength`, `pattern`, `type`, `min`, `max`, `step`.
-- Кастомные сообщения через JS-цепочки.
-- `validate()` + автопроверка на `submit`.
-- Вывод ошибок под полями (`<p data-ts-val-error-for="...">`).
-- Типы вынесены в `src/types/types.ts`.
-- Тесты Vitest: happy path и негативные сценарии.
+- [x] Есть точка входа: `form(formElement: HTMLFormElement)`.
+- [x] Есть API для полей: `validator.field(name)`.
+- [x] Есть цепочки типов: `string()`, `number()`, `array()`.
+- [x] Поддержаны native-ограничения браузера: `required`, `minlength`, `maxlength`, `pattern`, `type`, `min`, `max`, `step`.
+- [x] Можно задавать свои сообщения об ошибках в цепочке.
+- [x] Есть ручной запуск проверки: `validate()`.
+- [x] Есть автопроверка на `submit`.
+- [x] Ошибки выводятся в DOM под полем через `<p data-ts-val-error-for="...">`.
+- [x] Типы вынесены в `src/types/types.ts`.
+- [x] Есть тесты на успешные и неуспешные сценарии.
 
 ## TS: Анализ
-Ключевая идея: объединить два источника правил.
 
-1. HTML-ограничения (нативные атрибуты поля) через `checkValidity()`/`validity`.
-2. Правила из JS-цепочек (`field(...).string().minlength(...).custom(...)`).
+Что используем из DOM:
 
-Порядок проверки:
+- `HTMLFormElement`, `HTMLInputElement`, `HTMLSelectElement`, `HTMLTextAreaElement`.
+- `form.elements` для поиска полей по `name`.
+- `addEventListener("submit", ...)` и `preventDefault()` для блокировки отправки при ошибках.
+- `checkValidity()`, `validity`, `validationMessage` для native-валидации.
+- `querySelectorAll`, `createElement`, `insertAdjacentElement`, `setAttribute`, `removeAttribute` для вывода/очистки ошибок.
 
-1. Сначала native-валидация (если есть ошибка, берётся native message или переопределённое сообщение из цепочки).
-2. Затем дополнительные JS-правила.
+Как читаем атрибуты и ограничения:
 
-Так достигается совместимость с браузерным API и расширяемость без потери типизации.
+- Для native-правил вручную атрибуты не парсим, это делает сам браузер через `checkValidity()`.
+- Для собственных правил читаем текущее значение поля (`value`, `checked`, `selectedOptions`) и проверяем уже в TypeScript.
+- Для `type` используем проверку через временный `<input>` + `checkValidity()`, а для `email/url` есть отдельные шаблоны.
+
+Как выбираем сообщение об ошибке:
+
+1. Если упало native-правило и для него задано сообщение в цепочке, берем его.
+2. Иначе берем `control.validationMessage` от браузера.
+3. Если native-проверка прошла, запускаем JS-правила (`minItems`, `custom` и т.д.).
+4. Если для JS-правила есть свой текст, берем его, иначе берем дефолтный.
+
+Как выводим ошибки:
+
+- Полю ставим `aria-invalid="true"`.
+- Создаем `<p class="ts-val-error" data-ts-val-error-for="имя_поля">...</p>`.
+- Добавляем `role="alert"` и `aria-live="assertive"`.
+- Вставляем ошибку сразу после последнего контрола поля.
+- Перед новой проверкой удаляем старые ошибки и сбрасываем `aria-invalid`.
+
+## Отдельный блок: 5 библиотек валидации форм + рейтинг
+
+Оценка по 5-балльной шкале.  
+Свежесть и звезды - по GitHub, данные на **24 февраля 2026**.
+
+| # | Библиотека | Свежесть | Простота | Документация | Звезды GitHub | Итог |
+|---|---|---:|---:|---:|---:|---:|
+| 1 | [Zod](https://github.com/colinhacks/zod) | 5 | 4 | 5 | 42k | 19 |
+| 2 | [Yup](https://github.com/jquense/yup) | 3 | 5 | 4 | 23.7k | 16 |
+| 3 | [Valibot](https://github.com/fabian-hiller/valibot) | 5 | 4 | 4 | 8.5k | 16 |
+| 4 | [Joi](https://github.com/hapijs/joi) | 4 | 3 | 5 | 21.2k | 16 |
+| 5 | [Vest](https://github.com/ealush/vest) | 5 | 3 | 3 | 2.6k | 12 |
+
+Коротко:
+
+- `Zod` - самый ровный вариант по балансу.
+- `Yup` - проще всего начать.
+- `Valibot` - очень свежий и легкий по размеру.
+- `Joi` - мощный, но API чуть сложнее.
+- `Vest` - интересный DSL-подход, но комьюнити меньше.
 
 ## TS: Типы
 Публичные типы находятся в `src/types/types.ts`.
