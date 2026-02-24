@@ -9,8 +9,9 @@
     <main>
       <section>
         <form novalidate>
-          <label>Имя <input type="text" required></label>
           <p role="alert" aria-live="assertive"></p>
+          <label for="name">Имя</label>
+          <input id="name" name="name" type="text" required minlength="2" maxlength="30">
           <button type="submit">Отправить</button>
         </form>
       </section>
