@@ -1,23 +1,25 @@
 import type {
   ArrayFieldChain,
   FieldBuilder,
+  NativeConstraintKind,
   NumberFieldChain,
   RuleConfig,
   StringFieldChain,
   ValueKind,
+  CustomRuleValidator,
 } from "../types";
 
 export class FieldConfigurator
   implements FieldBuilder, StringFieldChain, NumberFieldChain, ArrayFieldChain
 {
-  private readonly name: string;
-
-  private kind: ValueKind = "string";
+  private kind: ValueKind;
 
   private readonly rules: RuleConfig[] = [];
 
-  public constructor(name: string) {
-    this.name = name;
+  private readonly nativeMessages: Partial<Record<NativeConstraintKind, string>> = {};
+
+  public constructor(initialKind: ValueKind) {
+    this.kind = initialKind;
   }
 
   public string(): StringFieldChain {
@@ -75,12 +77,8 @@ export class FieldConfigurator
     return this.pushRule("maxItems", message, value);
   }
 
-  public custom(message?: string): this {
-    return this.pushRule("custom", message);
-  }
-
-  public getName(): string {
-    return this.name;
+  public custom(validator: CustomRuleValidator, message?: string): this {
+    return this.pushRule("custom", message, undefined, validator);
   }
 
   public getKind(): ValueKind {
@@ -91,12 +89,33 @@ export class FieldConfigurator
     return [...this.rules];
   }
 
+  public getNativeMessages(): Partial<Record<NativeConstraintKind, string>> {
+    return { ...this.nativeMessages };
+  }
+
   private pushRule(
     kind: RuleConfig["kind"],
     message?: string,
     value?: RuleConfig["value"],
+    validator?: CustomRuleValidator,
   ): this {
-    this.rules.push({ kind, message, value });
+    this.rules.push({ kind, message, value, validator });
+    if (isNativeConstraintKind(kind) && typeof message === "string") {
+      this.nativeMessages[kind] = message;
+    }
     return this;
   }
+}
+
+function isNativeConstraintKind(kind: RuleConfig["kind"]): kind is NativeConstraintKind {
+  return (
+    kind === "required" ||
+    kind === "minlength" ||
+    kind === "maxlength" ||
+    kind === "pattern" ||
+    kind === "type" ||
+    kind === "min" ||
+    kind === "max" ||
+    kind === "step"
+  );
 }
