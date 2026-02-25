@@ -19,19 +19,32 @@ export interface RuleConfig {
   value?: number | string | RegExp;
 }
 
+export interface StringFieldChain {
+  required(message?: string): StringFieldChain;
+  minlength(value: number, message?: string): StringFieldChain;
+  maxlength(value: number, message?: string): StringFieldChain;
+  pattern(value: string | RegExp, message?: string): StringFieldChain;
+  type(value: string, message?: string): StringFieldChain;
+  custom(message?: string): StringFieldChain;
+}
+
+export interface NumberFieldChain {
+  required(message?: string): NumberFieldChain;
+  min(value: number, message?: string): NumberFieldChain;
+  max(value: number, message?: string): NumberFieldChain;
+  step(value: number, message?: string): NumberFieldChain;
+  custom(message?: string): NumberFieldChain;
+}
+
+export interface ArrayFieldChain {
+  required(message?: string): ArrayFieldChain;
+  minItems(value: number, message?: string): ArrayFieldChain;
+  maxItems(value: number, message?: string): ArrayFieldChain;
+  custom(message?: string): ArrayFieldChain;
+}
+
 export interface FieldBuilder {
-  string(): FieldBuilder;
-  number(): FieldBuilder;
-  array(): FieldBuilder;
-  required(message?: string): FieldBuilder;
-  minlength(value: number, message?: string): FieldBuilder;
-  maxlength(value: number, message?: string): FieldBuilder;
-  pattern(value: string | RegExp, message?: string): FieldBuilder;
-  type(value: string, message?: string): FieldBuilder;
-  min(value: number, message?: string): FieldBuilder;
-  max(value: number, message?: string): FieldBuilder;
-  step(value: number, message?: string): FieldBuilder;
-  minItems(value: number, message?: string): FieldBuilder;
-  maxItems(value: number, message?: string): FieldBuilder;
-  custom(message?: string): FieldBuilder;
+  string(): StringFieldChain;
+  number(): NumberFieldChain;
+  array(): ArrayFieldChain;
 }

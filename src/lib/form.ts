@@ -1,5 +1,10 @@
 import { FieldConfigurator } from "./field";
-import type { FieldBuilder, FormValidator, FormValidatorErrors } from "../types";
+import type {
+  FieldBuilder,
+  FormValidator,
+  ValidationErrors,
+  ValidationResult,
+} from "../types";
 
 type FormControl = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
@@ -8,10 +13,10 @@ class FormValidatorImpl implements FormValidator {
 
   private readonly fields = new Map<string, FieldConfigurator>();
 
-  private readonly errors: FormValidatorErrors = {};
+  private readonly errors: ValidationErrors = {};
 
   private readonly submitHandler = (event: SubmitEvent): void => {
-    if (!this.validate()) {
+    if (!this.validate().valid) {
       event.preventDefault();
     }
   };
@@ -33,7 +38,7 @@ class FormValidatorImpl implements FormValidator {
     return field;
   }
 
-  public validate(): boolean {
+  public validate(): ValidationResult {
     this.clearErrors();
     let valid = true;
 
@@ -51,15 +56,18 @@ class FormValidatorImpl implements FormValidator {
       if (!firstControl.checkValidity()) {
         valid = false;
         const message = firstControl.validationMessage || "Некорректное значение";
-        this.errors[fieldName] = [message];
+        this.errors[fieldName] = message;
         this.renderError(fieldName, message);
       }
     }
 
-    return valid;
+    return {
+      valid,
+      errors: this.getErrors(),
+    };
   }
 
-  public getErrors(): FormValidatorErrors {
+  public getErrors(): ValidationErrors {
     return { ...this.errors };
   }
 

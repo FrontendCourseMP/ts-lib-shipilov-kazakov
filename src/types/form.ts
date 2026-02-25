@@ -1,10 +1,15 @@
 import type { FieldBuilder } from "./field";
 
-export type FormValidatorErrors = Record<string, string[]>;
+export type ValidationErrors = Record<string, string>;
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: ValidationErrors;
+}
 
 export interface FormValidator {
   field(name: string): FieldBuilder;
-  validate(): boolean;
-  getErrors(): FormValidatorErrors;
+  validate(): ValidationResult;
+  getErrors(): ValidationErrors;
   destroy(): void;
 }
