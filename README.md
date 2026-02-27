@@ -1,164 +1,229 @@
-# ts-val: библиотека валидации HTML-форм на TypeScript
+# Документация по библиотеке валидации `ts-val`
+Авторы: Казаков Дмитрий, Шипилов Сергей
+## Описание
 
-## TS: Задачи (чеклист требований)
+`ts-val` - библиотека для валидации HTML-форм на TypeScript.
 
-- [x] Есть точка входа: `form(formElement: HTMLFormElement)`.
-- [x] Есть API для полей: `validator.field(name)`.
-- [x] Есть цепочки типов: `string()`, `number()`, `array()`.
-- [x] Поддержаны native-ограничения браузера: `required`, `minlength`, `maxlength`, `pattern`, `type`, `min`, `max`, `step`.
-- [x] Можно задавать свои сообщения об ошибках в цепочке.
-- [x] Есть ручной запуск проверки: `validate()`.
-- [x] Есть автопроверка на `submit`.
-- [x] Ошибки выводятся в DOM под полем через `<p data-ts-val-error-for="...">`.
-- [x] Типы вынесены в `src/types/*`.
-- [x] Есть тесты на успешные и неуспешные сценарии.
+Поддерживает:
 
-## TS: Анализ
+- fluent API: `field(name).string()/number()/array()...`
+- native Constraint Validation API (`checkValidity`, `validity`, `validationMessage`)
+- кастомные сообщения ошибок из JS-цепочек
+- вывод ошибок в DOM через контейнеры `data-error-for` / `data-ts-val-error-for`
+- ручной запуск `validate()` и автопривязку к `submit` (можно отключить)
 
-Что используем из DOM:
+## Требования
 
-- `HTMLFormElement`, `HTMLInputElement`, `HTMLSelectElement`, `HTMLTextAreaElement`.
-- `form.elements` для поиска полей по `name`.
-- `addEventListener("submit", ...)` и `preventDefault()` для блокировки отправки при ошибках.
-- `checkValidity()`, `validity`, `validationMessage` для native-валидации.
-- `querySelectorAll`, `createElement`, `insertAdjacentElement`, `setAttribute`, `removeAttribute` для вывода/очистки ошибок.
+- TypeScript 5.9+
+- Node.js 20+ (для разработки и тестов)
+- Современный браузер с поддержкой ES2022
 
-Как читаем атрибуты и ограничения:
+## Установка
 
-- Для native-правил вручную атрибуты не парсим, это делает сам браузер через `checkValidity()`.
-- Для собственных правил читаем текущее значение поля (`value`, `checked`, `selectedOptions`) и проверяем уже в TypeScript.
-- Для `type` используем проверку через временный `<input>` + `checkValidity()`, а для `email/url` есть отдельные шаблоны.
+### Для разработки
 
-Как выбираем сообщение об ошибке:
-
-1. Если упало native-правило и для него задано сообщение в цепочке, берем его.
-2. Иначе берем `control.validationMessage` от браузера.
-3. Если native-проверка прошла, запускаем JS-правила (`minItems`, `custom` и т.д.).
-4. Если для JS-правила есть свой текст, берем его, иначе берем дефолтный.
-
-Как выводим ошибки:
-
-- Полю ставим `aria-invalid="true"`.
-- Создаем `<p class="ts-val-error" data-ts-val-error-for="имя_поля">...</p>`.
-- Добавляем `role="alert"` и `aria-live="assertive"`.
-- Вставляем ошибку сразу после последнего контрола поля.
-- Перед новой проверкой удаляем старые ошибки, сбрасываем `aria-invalid` и очищаем `setCustomValidity("")`.
-
-## Отдельный блок: 5 библиотек валидации форм + рейтинг
-
-Оценка по 5-балльной шкале.  
-Свежесть и звезды - по GitHub, данные на **24 февраля 2026**.
-
-| # | Библиотека | Свежесть | Простота | Документация | Звезды GitHub | Итог |
-|---|---|---:|---:|---:|---:|---:|
-| 1 | [Zod](https://github.com/colinhacks/zod) | 5 | 4 | 5 | 42k | 19 |
-| 2 | [Yup](https://github.com/jquense/yup) | 3 | 5 | 4 | 23.7k | 16 |
-| 3 | [Valibot](https://github.com/fabian-hiller/valibot) | 5 | 4 | 4 | 8.5k | 16 |
-| 4 | [Joi](https://github.com/hapijs/joi) | 4 | 3 | 5 | 21.2k | 16 |
-| 5 | [Vest](https://github.com/ealush/vest) | 5 | 3 | 3 | 2.6k | 12 |
-
-Коротко:
-
-- `Zod` - самый ровный вариант по балансу.
-- `Yup` - проще всего начать.
-- `Valibot` - очень свежий и легкий по размеру.
-- `Joi` - мощный, но API чуть сложнее.
-- `Vest` - интересный DSL-подход, но комьюнити меньше.
-
-## TS: Типы
-Публичные типы находятся в `src/types/index.ts`.
-
-- `FormValidator`: `field`, `validate`, `getErrors`, `destroy`.
-- `FieldBuilder`: chain API для всех типов полей.
-- `RuleKind`, `RuleConfig`, `ValueKind`, `FieldValue`.
-- `CustomRuleContext` и `CustomRuleValidator` для пользовательских проверок.
-
-Пример типизированного контекста кастомного правила:
-
-```ts
-custom(({ value, name, form }) => {
-  return typeof value === "string" && value !== form.id && name.length > 0;
-}, "Кастомная ошибка");
+```bash
+npm install
 ```
 
-## TS: Реализация
-### Структура
+### Сборка библиотеки (пакетные артефакты)
 
-- `src/lib/index.ts` - точка входа библиотеки.
-- `src/lib/form.ts` - реализация валидатора.
-- `src/lib/field.ts` - builder и правила.
-- `src/types/index.ts` - публичные типы.
-- `src/tests/form-validator.test.ts` - тесты.
+```bash
+npm run build:package
+```
 
-### Основной сценарий использования
+После сборки entry-файлы библиотеки находятся в `dist-package/lib`.
+
+## Быстрый старт
+
+### Пример использования
 
 ```ts
 import * as n from "ts-val";
 
-const formElement = document.querySelector("form");
+const formElement = document.querySelector<HTMLFormElement>("#signup-form");
 
-if (formElement instanceof HTMLFormElement) {
+if (formElement) {
   const validator = n.form(formElement);
 
   validator
     .field("username")
     .string()
     .required("Введите имя")
-    .minlength(3, "Минимум 3 символа")
-    .maxlength(20, "Максимум 20 символов");
+    .minlength(2, "Минимум 2 символа")
+    .maxlength(30, "Максимум 30 символов");
 
   validator
-    .field("age")
-    .number()
-    .required("Укажите возраст")
-    .min(18, "Только 18+")
-    .step(1, "Возраст должен быть целым");
+    .field("email")
+    .string()
+    .required("Введите email")
+    .type("email", "Некорректный email");
 
-  validator
-    .field("tags")
-    .array()
-    .minItems(1, "Выберите минимум один тег")
-    .maxItems(3, "Можно выбрать максимум 3 тега");
-
-  const result = validator.validate(); // ручной запуск проверки
-  console.log("valid:", result.valid, result.errors);
+  const result = validator.validate();
+  console.log(result.valid, result.errors);
 }
 ```
 
-### API (кратко)
+### Минимальная HTML-структура
 
-- `form(formElement)` -> `FormValidator`
-- `validator.field(name)` -> `FieldBuilder`
-- `FieldBuilder`:
-  - тип поля: `string()`, `number()`, `array()`
-  - общие: `required()`, `custom()`
-  - string: `minlength()`, `maxlength()`, `pattern()`, `type()`
-  - number: `min()`, `max()`, `step()`
-  - array: `minItems()`, `maxItems()`
-- `validator.validate()` -> `{ valid: boolean, errors: Record<string, string[]> }`
-- `validator.getErrors()` -> `Record<string, string[]>`
-- `validator.destroy()` -> отключение submit-hook и очистка ошибок
+```html
+<form id="signup-form">
+  <label>
+    Username
+    <input name="username" required minlength="2" />
+  </label>
+  <p data-error-for="username"></p>
 
-### Поведение на submit
+  <label>
+    Email
+    <input name="email" type="email" required />
+  </label>
+  <p data-ts-val-error-for="email"></p>
 
-При создании валидатора форма автоматически подписывается на `submit`:
+  <button type="submit">Submit</button>
+</form>
+```
 
-- если форма невалидна -> `preventDefault()` и рендер ошибок;
-- если валидна -> отправка не блокируется.
+Примечания:
 
-## Тесты
-Тесты покрывают 5 кейсов:
+- поле должно иметь атрибут `name`
+- если контейнер ошибки не задан, библиотека создаст его автоматически (`<p class="ts-val-error"...>`)
 
-- happy path (валидно);
-- `required` пусто;
-- `minlength` слишком коротко;
-- `pattern` mismatch;
-- checkbox array: не выбран ни один элемент.
+## API
 
-Команды:
+### `form(formElement, options?)`
+
+Создает экземпляр валидатора.
+
+Параметры:
+
+- `formElement: HTMLFormElement`
+- `options?: FormOptions`
+- `bindOnSubmit?: boolean` (по умолчанию `true`)
+
+Возвращает: `FormValidator`.
+
+### `validator.field(name)`
+
+Регистрирует/получает конфиг поля и возвращает типизированную цепочку.
+
+Базовый выбор типа:
+
+- `.string()`
+- `.number()`
+- `.array()`
+
+### Правила для `string()`
+
+- `.required(message?)`
+- `.minlength(value, message?)`
+- `.maxlength(value, message?)`
+- `.pattern(value, message?)`
+- `.type(value, message?)`
+- `.custom(validator, message?)`
+
+### Правила для `number()`
+
+- `.required(message?)`
+- `.min(value, message?)`
+- `.max(value, message?)`
+- `.step(value, message?)`
+- `.custom(validator, message?)`
+
+### Правила для `array()`
+
+- `.required(message?)`
+- `.minItems(value, message?)`
+- `.maxItems(value, message?)`
+- `.custom(validator, message?)`
+
+### `validator.validate()`
+
+Запускает валидацию всех полей формы.
+
+Возвращает:
+
+```ts
+{
+  valid: boolean;
+  errors: Record<string, string[]>;
+}
+```
+
+Поведение:
+
+- очищает прошлые ошибки (`aria-invalid`, контейнеры, `setCustomValidity("")`)
+- сначала проверяет native-ограничения
+- затем JS-правила из цепочек
+- ставит `aria-invalid="true"` и рендерит текст ошибки в контейнер
+- синхронизирует сообщение через `setCustomValidity(message)`
+
+### `validator.getErrors()`
+
+Возвращает текущие ошибки в формате `Record<string, string[]>`.
+
+### `validator.destroy()`
+
+Снимает submit-listener (если был включен) и очищает состояние ошибок.
+
+## Типы
+
+Публичные типы экспортируются из `src/types/index.ts`:
+
+- `FormValidator`, `FormOptions`, `ValidationResult`, `ValidationErrors`
+- `FieldBuilder`, `StringFieldChain`, `NumberFieldChain`, `ArrayFieldChain`
+- `RuleKind`, `RuleConfig`, `ValueKind`, `FieldValue`
+- `CustomRuleContext`, `CustomRuleValidator`, `NativeConstraintKind`, `FormControl`
+
+Пример custom-правила:
+
+```ts
+validator.field("username").string().custom(({ value }) => {
+  return typeof value === "string" && value.trim().length >= 2;
+}, "Минимум 2 символа");
+```
+
+## Тестирование
+
+Проект использует `Vitest` + `jsdom`.
+
+Запуск:
 
 ```bash
 npm test -- --run
-npm run build
-npm run build:package
 ```
+
+Текущий набор тестов (5 кейсов):
+
+- happy path (валидная форма)
+- `required` на пустом поле
+- `minlength` на коротком значении
+- `pattern` mismatch
+- `array/minItems` для группы checkbox
+
+## Структура проекта
+
+```text
+src/
+  lib/
+    index.ts
+    form.ts
+    field.ts
+  types/
+    index.ts
+    form.ts
+    field.ts
+  tests/
+    form-validator.test.ts
+```
+
+## Соответствие требованиям
+
+- Есть точка входа `form(formElement: HTMLFormElement)`.
+- Есть API `validator.field(name)` и type chains `string/number/array`.
+- Используется Constraint Validation API браузера.
+- Поддержаны кастомные сообщения ошибок.
+- `validate()` возвращает объект результата `{ valid, errors }`.
+- Есть автопривязка на `submit` и отключение через `bindOnSubmit: false`.
+- Типы API и результата выделены и экспортируются отдельно.
+- Есть unit-тесты с DOM-окружением (`jsdom`).
