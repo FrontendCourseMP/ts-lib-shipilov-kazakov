@@ -2,7 +2,7 @@
 
 import { afterEach, describe, expect, test } from "vitest";
 
-import { form } from "../main";
+import { form } from "../lib";
 
 function createForm(markup: string): HTMLFormElement {
   document.body.innerHTML = markup;

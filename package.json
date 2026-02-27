@@ -1,11 +1,24 @@
 {
   "name": "ts-val",
-  "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "./dist-package/lib/index.js",
+  "types": "./dist-package/lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-package/lib/index.d.ts",
+      "import": "./dist-package/lib/index.js",
+      "default": "./dist-package/lib/index.js"
+    }
+  },
+  "files": [
+    "dist-package",
+    "README.md"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:package": "rm -rf dist-package && tsc -p tsconfig.package.json",
     "preview": "vite preview",
     "test": "vitest",
     "lint": "eslint",

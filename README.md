@@ -10,7 +10,7 @@
 - [x] Есть ручной запуск проверки: `validate()`.
 - [x] Есть автопроверка на `submit`.
 - [x] Ошибки выводятся в DOM под полем через `<p data-ts-val-error-for="...">`.
-- [x] Типы вынесены в `src/types/types.ts`.
+- [x] Типы вынесены в `src/types/*`.
 - [x] Есть тесты на успешные и неуспешные сценарии.
 
 ## TS: Анализ
@@ -42,7 +42,7 @@
 - Создаем `<p class="ts-val-error" data-ts-val-error-for="имя_поля">...</p>`.
 - Добавляем `role="alert"` и `aria-live="assertive"`.
 - Вставляем ошибку сразу после последнего контрола поля.
-- Перед новой проверкой удаляем старые ошибки и сбрасываем `aria-invalid`.
+- Перед новой проверкой удаляем старые ошибки, сбрасываем `aria-invalid` и очищаем `setCustomValidity("")`.
 
 ## Отдельный блок: 5 библиотек валидации форм + рейтинг
 
@@ -66,12 +66,12 @@
 - `Vest` - интересный DSL-подход, но комьюнити меньше.
 
 ## TS: Типы
-Публичные типы находятся в `src/types/types.ts`.
+Публичные типы находятся в `src/types/index.ts`.
 
 - `FormValidator`: `field`, `validate`, `getErrors`, `destroy`.
 - `FieldBuilder`: chain API для всех типов полей.
-- `ValidationKind`, `ValidationRule`, `FieldKind`, `FieldValue`.
-- `CustomRuleContext` и `CustomValidator` для пользовательских проверок.
+- `RuleKind`, `RuleConfig`, `ValueKind`, `FieldValue`.
+- `CustomRuleContext` и `CustomRuleValidator` для пользовательских проверок.
 
 Пример типизированного контекста кастомного правила:
 
@@ -84,20 +84,21 @@ custom(({ value, name, form }) => {
 ## TS: Реализация
 ### Структура
 
-- `src/main.ts` - точка входа и re-export API.
-- `src/validator.ts` - реализация валидатора.
-- `src/types/types.ts` - типы.
+- `src/lib/index.ts` - точка входа библиотеки.
+- `src/lib/form.ts` - реализация валидатора.
+- `src/lib/field.ts` - builder и правила.
+- `src/types/index.ts` - публичные типы.
 - `src/tests/form-validator.test.ts` - тесты.
 
 ### Основной сценарий использования
 
 ```ts
-import { form } from "./src/main";
+import * as n from "ts-val";
 
 const formElement = document.querySelector("form");
 
 if (formElement instanceof HTMLFormElement) {
-  const validator = form(formElement);
+  const validator = n.form(formElement);
 
   validator
     .field("username")
@@ -119,8 +120,8 @@ if (formElement instanceof HTMLFormElement) {
     .minItems(1, "Выберите минимум один тег")
     .maxItems(3, "Можно выбрать максимум 3 тега");
 
-  const ok = validator.validate(); // ручной запуск проверки
-  console.log("valid:", ok, validator.getErrors());
+  const result = validator.validate(); // ручной запуск проверки
+  console.log("valid:", result.valid, result.errors);
 }
 ```
 
@@ -134,7 +135,7 @@ if (formElement instanceof HTMLFormElement) {
   - string: `minlength()`, `maxlength()`, `pattern()`, `type()`
   - number: `min()`, `max()`, `step()`
   - array: `minItems()`, `maxItems()`
-- `validator.validate()` -> `boolean`
+- `validator.validate()` -> `{ valid: boolean, errors: Record<string, string[]> }`
 - `validator.getErrors()` -> `Record<string, string[]>`
 - `validator.destroy()` -> отключение submit-hook и очистка ошибок
 
@@ -146,19 +147,18 @@ if (formElement instanceof HTMLFormElement) {
 - если валидна -> отправка не блокируется.
 
 ## Тесты
-Тесты покрывают:
+Тесты покрывают 5 кейсов:
 
-- happy path;
-- native required/type;
-- кастомные правила pattern/custom;
-- number (`min`, `step`);
-- array (`minItems`, `maxItems`);
-- submit-hook (валидный/невалидный submit);
-- ветку отсутствующего поля в конфиге.
+- happy path (валидно);
+- `required` пусто;
+- `minlength` слишком коротко;
+- `pattern` mismatch;
+- checkbox array: не выбран ни один элемент.
 
 Команды:
 
 ```bash
 npm test -- --run
 npm run build
+npm run build:package
 ```

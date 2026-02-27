@@ -242,13 +242,19 @@ class FormValidatorImpl implements FormValidator {
     messageOverrides: Partial<Record<NativeConstraintKind, string>>,
   ): string | null {
     for (const control of controls) {
+      if (control.willValidate) {
+        control.setCustomValidity("");
+      }
+
       if (!control.willValidate || control.checkValidity()) {
         continue;
       }
 
       const violation = getNativeViolationKind(control.validity);
       if (violation && messageOverrides[violation]) {
-        return messageOverrides[violation];
+        const message = messageOverrides[violation];
+        control.setCustomValidity(message);
+        return control.validationMessage || message;
       }
 
       return control.validationMessage || "Некорректное значение поля.";
@@ -268,6 +274,9 @@ class FormValidatorImpl implements FormValidator {
 
     for (const controls of this.controlsByName.values()) {
       for (const control of controls) {
+        if (control.willValidate) {
+          control.setCustomValidity("");
+        }
         control.removeAttribute("aria-invalid");
       }
     }
@@ -284,6 +293,9 @@ class FormValidatorImpl implements FormValidator {
   ): void {
     for (const control of controls) {
       control.setAttribute("aria-invalid", "true");
+      if (control.willValidate) {
+        control.setCustomValidity(message);
+      }
     }
 
     container.textContent = message;
