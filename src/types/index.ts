@@ -15,6 +15,7 @@ export type {
 export type {
   FormOptions,
   FormValidator,
+  ValidateFn,
   ValidationErrors,
   ValidationResult,
 } from "./form";

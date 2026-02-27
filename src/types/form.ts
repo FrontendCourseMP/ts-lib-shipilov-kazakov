@@ -11,9 +11,11 @@ export interface FormOptions {
   bindOnSubmit?: boolean;
 }
 
+export type ValidateFn = () => ValidationResult;
+
 export interface FormValidator {
   field(name: string): FieldBuilder;
-  validate(): ValidationResult;
+  validate: ValidateFn;
   getErrors(): ValidationErrors;
   destroy(): void;
 }
