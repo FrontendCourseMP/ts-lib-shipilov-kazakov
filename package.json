@@ -18,7 +18,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:package": "rm -rf dist-package && tsc -p tsconfig.package.json",
+    "build:package": "node -e \"require('fs').rmSync('dist-package', { recursive: true, force: true })\" && tsc -p tsconfig.package.json",
     "preview": "vite preview",
     "test": "vitest",
     "lint": "eslint",
