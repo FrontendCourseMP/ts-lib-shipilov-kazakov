@@ -16,7 +16,9 @@ export class FieldConfigurator
 
   private readonly rules: RuleConfig[] = [];
 
-  private readonly nativeMessages: Partial<Record<NativeConstraintKind, string>> = {};
+  private readonly nativeMessages: Partial<
+    Record<NativeConstraintKind, string>
+  > = {};
 
   public constructor(initialKind: ValueKind) {
     this.kind = initialKind;
@@ -97,7 +99,7 @@ export class FieldConfigurator
     kind: RuleConfig["kind"],
     message?: string,
     value?: RuleConfig["value"],
-    validator?: CustomRuleValidator,
+    validator?: CustomRuleValidator
   ): this {
     this.rules.push({ kind, message, value, validator });
     if (isNativeConstraintKind(kind) && typeof message === "string") {
@@ -107,7 +109,9 @@ export class FieldConfigurator
   }
 }
 
-function isNativeConstraintKind(kind: RuleConfig["kind"]): kind is NativeConstraintKind {
+function isNativeConstraintKind(
+  kind: RuleConfig["kind"]
+): kind is NativeConstraintKind {
   return (
     kind === "required" ||
     kind === "minlength" ||

@@ -3,12 +3,14 @@
 Библиотека валидации HTML-форм на TypeScript.
 
 Авторы:
+
 - Шипилов Сергей
 - Казаков Дмитрий
 
 ## Кратко
 
 `ts-val` поддерживает:
+
 - точку входа `form(formElement, options?)`
 - API `validator.field(name)`
 - цепочки `string()`, `number()`, `array()`
@@ -75,6 +77,7 @@ if (formElement) {
 ## TS: Анализ
 
 Что используется из DOM и Constraint Validation API:
+
 - `HTMLFormElement`, `HTMLInputElement`, `HTMLSelectElement`, `HTMLTextAreaElement`
 - `form.elements`
 - `checkValidity()`
@@ -85,6 +88,7 @@ if (formElement) {
 - `insertAdjacentElement()`, `querySelectorAll()`, `setAttribute()`, `removeAttribute()`
 
 Как работает проверка:
+
 - библиотека собирает контролы формы по `name`
 - сначала проверяет native-ограничения через `checkValidity()` и `validity`
 - затем применяет JS-правила для `string`, `number`, `array`
@@ -92,6 +96,7 @@ if (formElement) {
 - текст ошибки дублируется в DOM и в объект результата
 
 Как выводятся ошибки:
+
 - используется контейнер `data-error-for="fieldName"` или он создается автоматически
 - на невалидные контролы ставится `aria-invalid="true"`
 - через `setCustomValidity(message)` синхронизируется custom message
@@ -101,15 +106,16 @@ if (formElement) {
 
 Оценка по критериям: свежесть, простота, документация, звезды.
 
-| Библиотека | Свежесть | Простота | Документация | Звезды |
-|---|---:|---:|---:|---:|
-| Zod | 5 | 4 | 5 | 5 |
-| Just-Validate | 4 | 5 | 4 | 4 |
-| Valibot | 5 | 4 | 4 | 3 |
-| Yup | 3 | 5 | 4 | 5 |
-| Vest | 4 | 3 | 3 | 2 |
+| Библиотека    | Свежесть | Простота | Документация | Звезды |
+| ------------- | -------: | -------: | -----------: | -----: |
+| Zod           |        5 |        4 |            5 |      5 |
+| Just-Validate |        4 |        5 |            4 |      4 |
+| Valibot       |        5 |        4 |            4 |      3 |
+| Yup           |        3 |        5 |            4 |      5 |
+| Vest          |        4 |        3 |            3 |      2 |
 
 Итог:
+
 - `Zod` и `Just-Validate` были главными ориентирами по удобству API
 - для лабораторной реализован свой fluent API, привязанный к HTML-форме
 
@@ -118,6 +124,7 @@ if (formElement) {
 Типы лежат в `src/types`.
 
 Основные публичные типы:
+
 - `FormValidator`
 - `FormOptions`
 - `ValidationResult`
@@ -140,6 +147,7 @@ type ValidationResult = {
 ## TS: Реализация
 
 Структура:
+
 - `src/lib/form.ts` - привязка к форме, submit-hook, native validation, рендер ошибок
 - `src/lib/field.ts` - fluent API и конфигурация правил поля
 - `src/lib/index.ts` - публичные экспорты
@@ -147,6 +155,7 @@ type ValidationResult = {
 - `src/tests/form-validator.test.ts` - unit-тесты
 
 Краткий API:
+
 - `form(formElement, options?)`
 - `validator.field(name).string()`
 - `validator.field(name).number()`
@@ -158,6 +167,7 @@ type ValidationResult = {
 ## Тесты
 
 Покрыты сценарии:
+
 - happy path
 - required
 - minlength
@@ -171,4 +181,5 @@ type ValidationResult = {
 - отсутствие контейнера ошибки
 
 Тесты находятся в:
+
 - `src/tests/form-validator.test.ts`
