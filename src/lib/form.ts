@@ -87,8 +87,8 @@ class FormValidatorImpl implements FormValidator {
       const field = this.fields.get(fieldName);
       if (controls.length === 0 && field) {
         valid = false;
-        const message = `Поле "${fieldName}" не найдено в форме.`;
-        this.pushError(fieldName, message);
+        const missingFieldMessage = `Поле "${fieldName}" не найдено в форме.`;
+        this.pushError(fieldName, missingFieldMessage);
         continue;
       }
 
@@ -96,15 +96,15 @@ class FormValidatorImpl implements FormValidator {
         continue;
       }
 
-      const message = this.validateField(fieldName, controls, field);
-      if (!message) {
+      const fieldMessage = this.validateField(fieldName, controls, field);
+      if (!fieldMessage) {
         continue;
       }
 
       valid = false;
-      this.pushError(fieldName, message);
+      this.pushError(fieldName, fieldMessage);
       const container = this.ensureErrorContainer(fieldName, controls);
-      this.renderError(controls, container, message);
+      this.renderError(controls, container, fieldMessage);
     }
 
     return {
@@ -114,9 +114,7 @@ class FormValidatorImpl implements FormValidator {
   }
 
   public getErrors(): ValidationErrors {
-    return Object.fromEntries(
-      Object.entries(this.errors).map(([name, messages]) => [name, [...messages]]),
-    );
+    return { ...this.errors };
   }
 
   public destroy(): void {
@@ -154,7 +152,9 @@ class FormValidatorImpl implements FormValidator {
   private refreshContainers(): void {
     const containers = new Map<string, HTMLElement>();
     const nodes = Array.from(
-      this.formElement.querySelectorAll<HTMLElement>("[data-error-for], [data-ts-val-error-for]"),
+      this.formElement.querySelectorAll<HTMLElement>(
+        "[data-error-for], [data-ts-val-error-for]"
+      )
     );
 
     for (const node of nodes) {
@@ -181,7 +181,10 @@ class FormValidatorImpl implements FormValidator {
     }
   }
 
-  private ensureErrorContainer(name: string, controls: FormControl[]): HTMLElement {
+  private ensureErrorContainer(
+    name: string,
+    controls: FormControl[]
+  ): HTMLElement {
     const existingContainer = this.containersByName.get(name);
     if (existingContainer && existingContainer.isConnected) {
       return existingContainer;
@@ -203,11 +206,11 @@ class FormValidatorImpl implements FormValidator {
   private validateField(
     name: string,
     controls: FormControl[],
-    config?: FieldConfigurator,
+    config?: FieldConfigurator
   ): string | null {
     const nativeError = this.validateNativeConstraints(
       controls,
-      config?.getNativeMessages() ?? {},
+      config?.getNativeMessages() ?? {}
     );
 
     if (nativeError) {
@@ -239,7 +242,7 @@ class FormValidatorImpl implements FormValidator {
 
   private validateNativeConstraints(
     controls: FormControl[],
-    messageOverrides: Partial<Record<NativeConstraintKind, string>>,
+    messageOverrides: Partial<Record<NativeConstraintKind, string>>
   ): string | null {
     for (const control of controls) {
       if (control.willValidate) {
@@ -264,9 +267,7 @@ class FormValidatorImpl implements FormValidator {
   }
 
   private pushError(name: string, message: string): void {
-    const messages = this.errors[name] ?? [];
-    messages.push(message);
-    this.errors[name] = messages;
+    this.errors[name] = message;
   }
 
   private clearErrors(): void {
@@ -289,7 +290,7 @@ class FormValidatorImpl implements FormValidator {
   private renderError(
     controls: FormControl[],
     container: HTMLElement,
-    message: string,
+    message: string
   ): void {
     for (const control of controls) {
       control.setAttribute("aria-invalid", "true");
@@ -311,7 +312,8 @@ function isFormControl(element: Element): element is FormControl {
 }
 
 function readContainerName(node: HTMLElement): string | null {
-  const name = node.dataset.errorFor?.trim() ?? node.dataset.tsValErrorFor?.trim() ?? "";
+  const name =
+    node.dataset.errorFor?.trim() ?? node.dataset.tsValErrorFor?.trim() ?? "";
   return name === "" ? null : name;
 }
 
@@ -322,7 +324,7 @@ function evaluateRule(
     form: HTMLFormElement;
     controls: FormControl[];
     value: FieldValue;
-  },
+  }
 ): boolean {
   const { value } = context;
 
@@ -419,13 +421,15 @@ function readArrayValue(controls: FormControl[]): string[] {
   }
 
   if (firstControl instanceof HTMLSelectElement && firstControl.multiple) {
-    return Array.from(firstControl.selectedOptions).map((option) => option.value);
+    return Array.from(firstControl.selectedOptions).map(
+      (option) => option.value
+    );
   }
 
   const checkableControls = controls.filter(
     (control): control is HTMLInputElement =>
       control instanceof HTMLInputElement &&
-      (control.type === "checkbox" || control.type === "radio"),
+      (control.type === "checkbox" || control.type === "radio")
   );
 
   if (checkableControls.length > 0) {
@@ -434,7 +438,9 @@ function readArrayValue(controls: FormControl[]): string[] {
       .map((control) => control.value);
   }
 
-  return controls.map((control) => control.value).filter((value) => value !== "");
+  return controls
+    .map((control) => control.value)
+    .filter((value) => value !== "");
 }
 
 function readStringValue(controls: FormControl[]): string {
@@ -450,7 +456,7 @@ function readStringValue(controls: FormControl[]): string {
   const checkableControls = controls.filter(
     (control): control is HTMLInputElement =>
       control instanceof HTMLInputElement &&
-      (control.type === "checkbox" || control.type === "radio"),
+      (control.type === "checkbox" || control.type === "radio")
   );
 
   if (checkableControls.length > 0) {
@@ -483,7 +489,9 @@ function inferFieldKind(controls: FormControl[]): ValueKind {
   return "string";
 }
 
-function getNativeViolationKind(validity: ValidityState): NativeConstraintKind | null {
+function getNativeViolationKind(
+  validity: ValidityState
+): NativeConstraintKind | null {
   if (validity.valueMissing) {
     return "required";
   }
@@ -586,6 +594,9 @@ function getDefaultRuleMessage(rule: RuleConfig): string {
   return "Проверка не пройдена.";
 }
 
-export function form(formElement: HTMLFormElement, options: FormOptions = {}): FormValidator {
+export function form(
+  formElement: HTMLFormElement,
+  options: FormOptions = {}
+): FormValidator {
   return new FormValidatorImpl(formElement, options);
 }

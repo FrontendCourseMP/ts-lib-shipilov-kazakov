@@ -1,6 +1,6 @@
 import type { FieldBuilder } from "./field";
 
-export type ValidationErrors = Record<string, string[]>;
+export type ValidationErrors = Record<string, string>;
 
 export interface ValidationResult {
   valid: boolean;
